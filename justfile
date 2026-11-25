@@ -42,8 +42,9 @@ sign: build
       --upload-source-code dist/source.zip --artifacts-dir dist/signed
 
 # Expects the signed .xpi for the current extension/package.json version from `just sign`. The tag
-# is pushed to both remotes before the release exists: GitHub mirrors Forgejo, and a tag missing
-# from Forgejo would be removed from GitHub on the next sync.
+# goes to Forgejo, and the release waits for the push mirror to bring it to GitHub: a tag pushed
+# to GitHub directly races the mirror's own push, and one missing from Forgejo would be removed
+# from GitHub by the next sync.
 # Publish the signed extension as a GitHub release, with updates.json for Firefox's updates.
 release:
     #!/usr/bin/env bash
@@ -67,7 +68,13 @@ release:
     ' "$version" "$name" > dist/release/updates.json
     git tag -a "v$version" -m "v$version"
     git push origin "v$version"
-    git push "git@github.com:{{github}}.git" "v$version"
+    for _ in $(seq 30); do
+      git ls-remote --exit-code "git@github.com:{{github}}.git" "refs/tags/v$version" >/dev/null && break
+      sleep 2
+    done
+    # The mirror did not deliver it in time; push it directly.
+    git ls-remote --exit-code "git@github.com:{{github}}.git" "refs/tags/v$version" >/dev/null \
+      || git push "git@github.com:{{github}}.git" "v$version"
     gh release create "v$version" --repo {{github}} --verify-tag --title "v$version" \
       --notes "Signed Firefox build (desktop and Android). Install the .xpi from about:addons → Install Add-on From File." \
       "dist/release/$name" dist/release/updates.json
