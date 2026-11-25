@@ -1,0 +1,24 @@
+{
+  "name": "cookie-communism-extension",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types test/vectors.test.ts test/interop.test.ts",
+    "test:browser": "node --test --experimental-strip-types test/browser.smoke.ts"
+  },
+  "dependencies": {
+    "age-encryption": "0.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/webextension-polyfill": "0.12.6",
+    "esbuild": "0.28.2",
+    "playwright-core": "1.64.1",
+    "typescript": "7.0.2",
+    "web-ext": "9.4.0"
+  }
+}

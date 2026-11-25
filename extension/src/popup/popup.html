@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>cookie-communism</title>
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="fdl.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="fdl">
+    <div class="page">
+      <header class="fdl-toolbar">
+        <span class="fdl-toolbar__title">cookie-communism</span>
+        <div class="fdl-toolbar__controls">
+          <button id="open-tab" class="fdl-button" type="button">Open in tab</button>
+          <button id="sync" class="fdl-button" type="button">Sync now</button>
+        </div>
+      </header>
+      <!-- Always rendered, so a message appearing never moves the page. -->
+      <p id="status" class="status" role="status"><span id="status-kind" class="status__kind"></span><span id="status-text"></span></p>
+
+      <main class="fdl-content">
+        <section id="setup" class="fdl-stack" hidden>
+          <p class="fdl-lead">Connect this browser to a relay.</p>
+          <p>Enter your relay's URL in the settings below. Consumers can pair once it is saved.</p>
+        </section>
+
+        <div id="alerts" class="fdl-stack"></div>
+
+        <div id="permissions" class="fdl-notice fdl-notice--warning" hidden>
+          <span class="fdl-notice__kind">Warning</span>
+          <div class="notice-body">
+            <p>Cookie access is missing for <span id="missing-domains"></span>. Consumers of those sites get no updates until you allow it.</p>
+            <div class="actions"><button id="grant-missing" class="fdl-button" type="button">Allow access</button></div>
+          </div>
+        </div>
+
+        <div id="pending" class="fdl-stack"></div>
+
+        <section id="invite-box" class="fdl-panel" hidden>
+          <div class="fdl-panel__head">
+            <h2>Invite</h2>
+            <button id="copy-invite" class="fdl-button fdl-button--small copy" type="button">Copy</button>
+          </div>
+          <div class="fdl-panel__body">
+            <pre id="invite" class="invite"></pre>
+            <p class="fdl-muted">Give this to the automation, for example <code>ccom pair 'cc1:…'</code>. It works once, for one hour.</p>
+          </div>
+        </section>
+
+        <section class="fdl-panel">
+          <div class="fdl-panel__head">
+            <h2>Consumers</h2>
+            <button id="add" class="fdl-button fdl-button--small" type="button" hidden>Add consumer</button>
+          </div>
+          <ul id="grants" class="fdl-list" aria-busy="true">
+            <li><span class="fdl-placeholder grant-placeholder">Loading</span></li>
+          </ul>
+          <div id="no-grants" class="fdl-empty" hidden>
+            <p>No consumers yet. Add one, then give its invite to the automation that needs the cookies.</p>
+            <button id="add-first" class="fdl-button" type="button">Add consumer</button>
+          </div>
+        </section>
+
+        <details id="settings" class="fdl-disclosure">
+          <summary>Settings <span id="settings-summary" class="fdl-muted"></span></summary>
+          <form id="settings-form" class="fdl-disclosure__body settings">
+            <div class="fdl-field">
+              <label for="set-label">Browser name</label>
+              <input id="set-label" class="fdl-input" required />
+              <span class="fdl-field__help">Consumers see this name when they choose between browsers.</span>
+            </div>
+            <div class="fdl-field">
+              <label for="set-relay">Relay URL</label>
+              <input id="set-relay" class="fdl-input" type="url" placeholder="https://relay.example.org" />
+              <span class="fdl-field__help">The relay you host. It only ever sees encrypted cookies.</span>
+            </div>
+            <div class="fdl-field">
+              <label for="set-secret">Registration secret</label>
+              <input id="set-secret" class="fdl-input" type="password" autocomplete="off" />
+              <span class="fdl-field__help">Only for a relay started with <code>--registration-secret</code>. Leave empty to keep the saved one.</span>
+            </div>
+            <div class="fdl-field">
+              <span class="fdl-field__label">Public key</span>
+              <div class="key">
+                <code id="public-key"></code>
+                <button id="copy-key" class="fdl-button fdl-button--small copy" type="button">Copy</button>
+              </div>
+              <span class="fdl-field__help">A relay started with <code>--allow-owner</code> and this key lets this browser sign up.</span>
+            </div>
+            <div class="actions"><button id="save-settings" class="fdl-button" type="submit">Save settings</button></div>
+          </form>
+        </details>
+      </main>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,3 @@
+[submodule "extension/vendor/fdl"]
+	path = extension/vendor/fdl
+	url = ../fdl.git

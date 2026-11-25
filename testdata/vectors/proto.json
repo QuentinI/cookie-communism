@@ -1,0 +1,85 @@
+{
+  "consumer_box": "age17xzsyl2mxdhz3gk4tz30xte2lgx7aq2p22xx63g49hh4q5zjuaxs0n00gn",
+  "consumer_box_identity": "AGE-SECRET-KEY-1WAYAVKNAN2YHVCYCH5CEP9KE6H9EZWKT3NEWSALYG5SA3RNAG63S86Y296",
+  "consumer_public": "_RckOFqgx1tk-3jNYC-h2ZH96_drE8WO1wLqyDXp9hg",
+  "consumer_seed": "CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk",
+  "envelope": {
+    "ciphertext": "YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0-IFgyNTUxOSB0M3F3VkZzNFRKVTBwYVRrei9vY2lweEV3VVIrQ2NLUFNwNlAreDJ1Y1FJClRvelBNdXA2bWhhWHFTeVNRaVJXSXJPc1FBd2RwbW8zd05CM2d5SkZIU0EKLT4gPSktZ3JlYXNlICVte0xVIEQ_PD4KVzkyeGZ1YWRkWHpNZXNXU3had2czU0JNUUJ4bFVyYmptSjRVcVgySHVXcm9yZTBuWGIyY3hXbGxaeHFrRW1BNApkTWdVVGpBTTY2VkdCOFF2U1hEZlF0bkhvbzhVUy9ibGo5TWhpMEp6NFQvckFSK2ZzNXhodHJTTG5OREgKLS0tICtCTWkwTXRPWFFsVmdrRlNuWlpsbUF2SkdvQUpWNm1yZG1lQ0dIemtHZDAKN8WsgbkUXIsbplqqjAbg_peK-TkN2Qh1gkL2ckpJ0yfJIZ4yHC18JW5qegZPMho4y77QLTDWrJAZ8GH6s2D2-QOqTVKJVznWyRSNOdWChpADK1ajwmMYd3OiOeOiVPptsqeFQ4Otd6YCEO5blVgudMwq7ZSuBYrfMom-2devM2ZpZhglB4JP1hU5_5DEU_kPNrOnolPSo2PGsy_16hA19K2B9Vuxf8dghBAgAcG6lvnFIVuRV6Qhdq0DHAfDQe_MeP7D_fIv2X3on9yBeSuJv0vs8VSvbvPNZzUpwo8lz16a00gamsg5R7iXbnp1MOxlVTna9xaoExlGqsxkJZgcg6q5Zs9-i-zDGKftXTJaJ5U1MXkNfvK45tPfHrGSf_z9KNURAHnYzMUnetDL072oOYseF2M3QH1M0YzJbMxQ6lW-vwOqJSMhZ27iEE6o3lgfOChnUuVmCilGbg",
+    "grant_id": "grant-id-0001",
+    "signature": "4yadpi_N9Tm9ywf5uq8mw6M3UEV4BtYG1uMsP2qqhJK4aCI1ylTeUewoUGqV2gxAHb_QnC0Z0AHWNOY1_vKpCg",
+    "version": 42
+  },
+  "invalid_selectors": [
+    "localhost",
+    "example.com:",
+    "example.com:a b",
+    "exa mple.com"
+  ],
+  "invite": {
+    "owner_box": "age1wj5fjl3nn7jths6whmza9hgfztprynleq80399gc39myvk493q0sw2ts2u",
+    "owner_sign": "6kpsY-KcUgq-9VB7Ey7F-ZVHdq6-vnuSQh7qaRRG0iw",
+    "relay": "https://relay.example",
+    "token": "dG9rZW4tdG9rZW4tdG9rZW4"
+  },
+  "invite_encoded": "cc1:eyJyZWxheSI6Imh0dHBzOi8vcmVsYXkuZXhhbXBsZSIsIm93bmVyX3NpZ24iOiI2a3BzWS1LY1VncS05VkI3RXk3Ri1aVkhkcTYtdm51U1FoN3FhUlJHMGl3Iiwib3duZXJfYm94IjoiYWdlMXdqNWZqbDNubjdqdGhzNndobXphOWhnZnp0cHJ5bmxlcTgwMzk5Z2MzOW15dms0OTNxMHN3MnRzMnUiLCJ0b2tlbiI6ImRHOXJaVzR0ZEc5clpXNHRkRzlyWlc0In0",
+  "message_signature": "HLtsm-MeAzVetZ9QS6jH5M3e8X8lyYzSsDdIVNyOqYJ0uKNyCPoTGKBaQG8i3ye8yjQF27QLgRXggiXwjYgtCA",
+  "owner_box": "age1wj5fjl3nn7jths6whmza9hgfztprynleq80399gc39myvk493q0sw2ts2u",
+  "owner_box_identity": "AGE-SECRET-KEY-19U9L27KR8VFQLKVQS6JGTLXR34K9VCA6G0HQ4T0E8XLFYUCHR4USH295ZJ",
+  "owner_public": "6kpsY-KcUgq-9VB7Ey7F-ZVHdq6-vnuSQh7qaRRG0iw",
+  "owner_seed": "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc",
+  "pairing_code": "STH5-7M8K",
+  "request": {
+    "body": "{\"token\":\"abc\"}",
+    "method": "POST",
+    "nonce": "bm9uY2Utbm9uY2Utbm9uY2U",
+    "path": "/invites?wait=5",
+    "signature": "xZ7WB6tj_W20Mq5HEKz340zZ_Jw4p4MBWGZisaxcG5fEbSLVNejdQnbbRFX-CO7df_hWbmJYns4dlt-fA85gDA",
+    "signed_text": "cc-req-v1\nPOST\n/invites?wait=5\n9c5955952c12f09397bd7fcf56624bea656322913fd00d884661c3b126d17a28\n1800000123\nbm9uY2Utbm9uY2Utbm9uY2U",
+    "time": 1800000123
+  },
+  "selectors": [
+    {
+      "canonical": "example.com:sid",
+      "matches": [
+        ".example.com",
+        "www.example.com"
+      ],
+      "rejects": [
+        "badexample.com"
+      ],
+      "text": ".Example.COM:sid"
+    },
+    {
+      "canonical": "example.com",
+      "matches": [
+        "example.com"
+      ],
+      "rejects": [
+        "example.org"
+      ],
+      "text": "example.com"
+    }
+  ],
+  "snapshot": {
+    "cookies": [
+      {
+        "changed_at": 1799999000,
+        "domain": ".example.com",
+        "expires": 1801209600,
+        "host_only": false,
+        "http_only": true,
+        "name": "sid",
+        "partition_key": null,
+        "path": "/",
+        "same_site": "no_restriction",
+        "secure": true,
+        "value": "s3cr3t=;%"
+      }
+    ],
+    "owner_label": "Glide — laptop",
+    "selectors": [
+      "example.com:sid"
+    ],
+    "taken_at": 1800000000
+  }
+}

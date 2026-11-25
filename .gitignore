@@ -1,0 +1,6 @@
+/target
+/extension/node_modules
+/extension/dist
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

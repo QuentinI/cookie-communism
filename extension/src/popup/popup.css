@@ -1,0 +1,147 @@
+/* Layout for the popup and its full-tab form. Components and every value come from fdl-css
+   (tokens.css, fdl.css); this file only arranges them. */
+
+/* fdl.css gives components a display value, which would otherwise override [hidden]. */
+[hidden] {
+  display: none !important;
+}
+
+/* Containers for alerts and pairing requests are often empty; they take no section gap then. */
+.fdl-content > :empty {
+  display: none;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--surface-0);
+}
+
+.page {
+  width: 400px;
+}
+
+/* In a tab or on Android, the page is a single column with drawn edges. */
+.tab .page {
+  width: auto;
+  max-width: 640px;
+  min-height: 100vh;
+  margin: 0 auto;
+  border-inline: 1px solid var(--border);
+}
+
+/* The status line under the toolbar: one line, with the full text on request. */
+.fdl .status {
+  margin: 0;
+  max-width: none;
+  padding: 4px var(--space-4);
+  min-height: 29px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+.status[data-error] {
+  cursor: pointer;
+}
+.status[data-expanded] {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.status__kind {
+  font-weight: 600;
+  color: var(--danger);
+  margin-right: var(--space-2);
+}
+.status__kind:empty {
+  display: none;
+}
+
+/* Buttons are right-justified in their group. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.notice-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* "Copy" becomes "Copied"; the width fits both. */
+.copy {
+  min-width: 64px;
+}
+
+.pair-code {
+  font: 500 24px/32px var(--font-mono);
+}
+
+.checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.checks code,
+.selectors code {
+  overflow-wrap: anywhere;
+}
+
+.invite {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-sunken);
+  font: 400 13px/20px var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.grant {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-block: 4px;
+}
+.grant__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.selectors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.grant-placeholder {
+  display: block;
+  width: 100%;
+  height: 66px;
+}
+
+.settings {
+  gap: var(--space-4);
+}
+.key {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.key code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
