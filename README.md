@@ -17,6 +17,19 @@ consumer. Consumers can pair with several browsers and choose between them by po
 | `crates/cli` | `ccom`: consumer CLI that keeps a Netscape `cookies.txt` current |
 | `crates/proto` | Wire protocol shared by all of the above |
 
+## Nix
+
+The flake packages the relay (`.#relay`), the CLI (`.#ccom`), both together (`.#default`), and
+the unsigned extension builds (`.#extension`). The extension needs the FDL submodule in its
+source, so build it from a checkout as `nix build '.?submodules=1#extension'`, or take the flake
+as an input with `?submodules=1`:
+
+```nix
+inputs.cookie-communism.url = "git+ssh://git@forgejo.faptek.party:2200/quentin/cookie-communism?submodules=1";
+```
+
+`nix develop` has the toolchain for the commands under Development.
+
 ## Setup
 
 ### 1. Relay
@@ -39,10 +52,15 @@ git submodule update --init   # FDL, the UI design language
 cd extension && npm install && npm run build
 ```
 
-This produces `dist/firefox.zip` and `dist/chrome.zip`. Firefox only installs signed extensions
-permanently: sign the zip as unlisted on addons.mozilla.org, or load `dist/firefox` temporarily
-from `about:debugging`. In Chrome, load `dist/chrome` unpacked from `chrome://extensions` in
-developer mode.
+This produces `dist/firefox.zip` and `dist/chrome.zip`. In Chrome, load `dist/chrome` unpacked
+from `chrome://extensions` in developer mode.
+
+Release Firefox, and Firefox for Android, only install signed extensions permanently. `just sign`
+signs the build on addons.mozilla.org as an unlisted add-on: no public listing, and the signed
+`.xpi` in `extension/dist/signed/` is yours to host or copy. It needs an AMO API key (see the
+justfile) and a new version in `extension/package.json` for each upload. On Android, enable the debug
+menu (tap the logo in Settings → About repeatedly), then use "Install add-on from file" in
+Settings. For testing, `about:debugging` loads `dist/firefox` until the browser restarts.
 
 In the extension's settings, enter the relay URL (and registration secret) and a name for this
 browser.

@@ -7,7 +7,7 @@ repository.workspace = true
 
 [dependencies]
 anyhow = "1.0.104"
-clap = { version = "4.6.7", features = ["derive"] }
+clap = { version = "4.6.7", features = ["derive", "env"] }
 cookie-communism = { version = "0.1.0", path = "../client" }
 dirs = "7.0.0"
 futures = "0.3.34"
