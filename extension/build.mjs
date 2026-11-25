@@ -32,6 +32,8 @@ const targets = {
         strict_min_version: "140.0",
         // Cookies leave the browser (encrypted, to consumers the user approves).
         data_collection_permissions: { required: ["authenticationInfo"] },
+        // Signed builds are distributed as GitHub releases; Firefox checks this for new versions.
+        update_url: "https://github.com/QuentinI/cookie-communism/releases/latest/download/updates.json",
       },
       // Firefox for Android supports data_collection_permissions from 142.
       gecko_android: { strict_min_version: "142.0" },

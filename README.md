@@ -55,12 +55,17 @@ cd extension && npm install && npm run build
 This produces `dist/firefox.zip` and `dist/chrome.zip`. In Chrome, load `dist/chrome` unpacked
 from `chrome://extensions` in developer mode.
 
-Release Firefox, and Firefox for Android, only install signed extensions permanently. `just sign`
-signs the build on addons.mozilla.org as an unlisted add-on: no public listing, and the signed
-`.xpi` in `extension/dist/signed/` is yours to host or copy. It needs an AMO API key (see the
-justfile) and a new version in `extension/package.json` for each upload. On Android, enable the debug
-menu (tap the logo in Settings → About repeatedly), then use "Install add-on from file" in
-Settings. For testing, `about:debugging` loads `dist/firefox` until the browser restarts.
+Release Firefox, and Firefox for Android, only install signed extensions permanently. Signed
+builds are on the [GitHub releases](https://github.com/QuentinI/cookie-communism/releases): in
+Firefox, install the `.xpi` from `about:addons` → *Install Add-on From File*, and Firefox keeps it
+updated from the latest release. On Android, enable the debug menu (tap the logo in Settings →
+About repeatedly), then use "Install add-on from file" in Settings. For testing, `about:debugging`
+loads `dist/firefox` until the browser restarts.
+
+To release: bump the version in `extension/package.json`, then run `just sign`, which signs on
+addons.mozilla.org as an unlisted add-on and needs an AMO API key in `.env` (`WEB_EXT_API_KEY=…` and `WEB_EXT_API_SECRET=…`; see the justfile), and
+`just release`, which tags the version on both remotes and publishes the `.xpi` with the
+`updates.json` that Firefox checks.
 
 In the extension's settings, enter the relay URL (and registration secret) and a name for this
 browser.
