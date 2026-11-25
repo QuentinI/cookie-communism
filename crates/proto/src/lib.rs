@@ -9,7 +9,7 @@ pub mod payload;
 pub mod selector;
 pub mod signing;
 
-pub use keys::{BoxIdentity, BoxRecipient, PublicKey, SignKey};
+pub use keys::{BoxIdentity, BoxRecipient, PublicKey, Purpose, SignKey};
 pub use payload::{ConsumerMessage, Cookie, Invite, PairingRequest, SameSite, Snapshot};
 pub use selector::Selector;
 

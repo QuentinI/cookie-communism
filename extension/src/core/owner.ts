@@ -87,7 +87,8 @@ export interface Alert {
 }
 
 export interface OwnerState {
-  format: 1;
+  /** 1 held an age identity; 2 holds a raw X25519 key for HPKE. */
+  format: 2;
   label: string;
   relay: string;
   registrationSecret: string | null;
@@ -150,13 +151,15 @@ export class Owner {
 
   static async open(platform: Platform, defaults: { label: string; relay?: string }): Promise<Owner> {
     let state = await platform.load();
-    if (!state) {
+    if (!state || (state.format as number) !== 2) {
+      // A format 1 state's box key and grants were made for age, which consumers no longer
+      // read. Keep the settings and the signing key, so the relay still knows this browser.
       state = {
-        format: 1,
-        label: defaults.label,
-        relay: defaults.relay ?? "",
-        registrationSecret: null,
-        signSeed: (await SignKey.generate()).seed,
+        format: 2,
+        label: state?.label ?? defaults.label,
+        relay: state?.relay ?? defaults.relay ?? "",
+        registrationSecret: state?.registrationSecret ?? null,
+        signSeed: state?.signSeed ?? (await SignKey.generate()).seed,
         boxIdentity: await generateBoxIdentity(),
         openInvites: [],
         pending: [],

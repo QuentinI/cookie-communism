@@ -5,8 +5,8 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    BoxIdentity, BoxRecipient, ConsumerMessage, Error, PairingRequest, PublicKey, Result, SignKey,
-    Snapshot, b64, signing, unb64,
+    BoxIdentity, BoxRecipient, ConsumerMessage, Error, PairingRequest, PublicKey, Purpose, Result,
+    SignKey, Snapshot, b64, signing, unb64,
 };
 
 /// The caller's Ed25519 public key.
@@ -58,7 +58,7 @@ pub struct CreateInvite {
 /// `POST /invites/{token}/request` (consumer).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostPairingRequest {
-    /// age ciphertext of a [`PairingRequest`], base64.
+    /// HPKE ciphertext of a [`PairingRequest`], base64.
     pub ciphertext: String,
     /// By the consumer, over [`signing::pairing_request`].
     pub signature: String,
@@ -71,7 +71,8 @@ impl PostPairingRequest {
         owner_box: &BoxRecipient,
         consumer: &SignKey,
     ) -> Result<Self> {
-        let ciphertext = owner_box.encrypt(&serde_json::to_vec(request)?)?;
+        let ciphertext =
+            owner_box.encrypt(&serde_json::to_vec(request)?, Purpose::PairingRequest)?;
         Ok(Self {
             signature: consumer.sign(&signing::pairing_request(invite_token, &ciphertext)),
             ciphertext: b64(&ciphertext),
@@ -117,7 +118,8 @@ impl MailboxItem {
             .as_deref()
             .ok_or_else(|| Error::Encoding("pairing item without invite token".into()))?;
         let ciphertext = unb64(&self.ciphertext)?;
-        let request: PairingRequest = serde_json::from_slice(&owner_box.decrypt(&ciphertext)?)?;
+        let request: PairingRequest =
+            serde_json::from_slice(&owner_box.decrypt(&ciphertext, Purpose::PairingRequest)?)?;
         if request.consumer_sign != self.sender {
             return Err(Error::BadSignature);
         }
@@ -140,7 +142,9 @@ impl MailboxItem {
             .ok_or_else(|| Error::Encoding("message item without grant ID".into()))?;
         let ciphertext = unb64(&self.ciphertext)?;
         consumer.verify(&signing::message(grant_id, &ciphertext), &self.signature)?;
-        Ok(serde_json::from_slice(&owner_box.decrypt(&ciphertext)?)?)
+        Ok(serde_json::from_slice(
+            &owner_box.decrypt(&ciphertext, Purpose::Message)?,
+        )?)
     }
 }
 
@@ -164,7 +168,7 @@ pub enum PairingStatus {
 pub struct Envelope {
     pub grant_id: String,
     pub version: u64,
-    /// age ciphertext of a [`Snapshot`], base64.
+    /// HPKE ciphertext of a [`Snapshot`], base64.
     pub ciphertext: String,
     /// By the owner, over [`signing::envelope`].
     pub signature: String,
@@ -178,7 +182,7 @@ impl Envelope {
         consumer_box: &BoxRecipient,
         owner: &SignKey,
     ) -> Result<Self> {
-        let ciphertext = consumer_box.encrypt(&serde_json::to_vec(snapshot)?)?;
+        let ciphertext = consumer_box.encrypt(&serde_json::to_vec(snapshot)?, Purpose::Envelope)?;
         Ok(Self {
             grant_id: grant_id.to_string(),
             version,
@@ -193,7 +197,9 @@ impl Envelope {
             &signing::envelope(&self.grant_id, self.version, &ciphertext),
             &self.signature,
         )?;
-        Ok(serde_json::from_slice(&consumer_box.decrypt(&ciphertext)?)?)
+        Ok(serde_json::from_slice(
+            &consumer_box.decrypt(&ciphertext, Purpose::Envelope)?,
+        )?)
     }
 }
 
@@ -226,7 +232,7 @@ impl PostMessage {
         owner_box: &BoxRecipient,
         consumer: &SignKey,
     ) -> Result<Self> {
-        let ciphertext = owner_box.encrypt(&serde_json::to_vec(message)?)?;
+        let ciphertext = owner_box.encrypt(&serde_json::to_vec(message)?, Purpose::Message)?;
         Ok(Self {
             signature: consumer.sign(&signing::message(grant_id, &ciphertext)),
             ciphertext: b64(&ciphertext),

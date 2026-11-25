@@ -1,6 +1,7 @@
-// Ed25519 (WebCrypto) and age X25519 (typage), with the same encodings as crates/proto.
+// Ed25519 signatures and X25519 HPKE encryption, both on WebCrypto, with the same encodings as
+// crates/proto.
 
-import { Decrypter, Encrypter, generateX25519Identity, identityToRecipient } from "age-encryption";
+import { Aes128Gcm, CipherSuite, DhkemX25519HkdfSha256, HkdfSha256 } from "@hpke/core";
 import { b64, randomBytes, unb64 } from "./encoding.ts";
 
 // PKCS#8 wrapping of a raw 32-byte Ed25519 seed (RFC 8410).
@@ -51,24 +52,49 @@ export async function verify(publicKey: string, message: Uint8Array<ArrayBuffer>
   }
 }
 
-/** A new age X25519 identity (`AGE-SECRET-KEY-1…`). */
-export function generateBoxIdentity(): Promise<string> {
-  return generateX25519Identity();
+// HPKE (RFC 9180), base mode, with DHKEM(X25519, HKDF-SHA256), HKDF-SHA256 and AES-128-GCM, all
+// on WebCrypto. Must match crates/proto/src/keys.rs. Built on first use, so bundles that never
+// encrypt (the popup) leave it out.
+let cipherSuite: CipherSuite | undefined;
+const hpke = () =>
+  (cipherSuite ??= new CipherSuite({ kem: new DhkemX25519HkdfSha256(), kdf: new HkdfSha256(), aead: new Aes128Gcm() }));
+/** Length of the encapsulated key that starts every ciphertext. */
+const ENC_LEN = 32;
+
+/** What a ciphertext holds, bound into its encryption as HPKE's `info`. */
+export type Purpose = "pairing request" | "envelope" | "message";
+const info = (purpose: Purpose) => new TextEncoder().encode(`cookie-communism/v1 ${purpose}`);
+
+/** A new X25519 private key, as the base64 of its 32 bytes. */
+export async function generateBoxIdentity(): Promise<string> {
+  const { privateKey } = await hpke().kem.generateKeyPair();
+  return b64(new Uint8Array(await hpke().kem.serializePrivateKey(privateKey)));
 }
 
-export function boxRecipient(identity: string): Promise<string> {
-  return identityToRecipient(identity);
+/** The public key of `identity`, as the base64 of its 32 bytes. */
+export async function boxRecipient(identity: string): Promise<string> {
+  const key = await hpke().kem.deserializePrivateKey(unb64(identity));
+  const { x } = await crypto.subtle.exportKey("jwk", key);
+  if (!x) throw new Error("WebCrypto did not export the X25519 public key");
+  return x;
 }
 
-export async function encryptTo(recipient: string, plaintext: Uint8Array): Promise<Uint8Array<ArrayBuffer>> {
-  if (!recipient.startsWith("age1")) throw new Error("not an age X25519 recipient");
-  const e = new Encrypter();
-  e.addRecipient(recipient);
-  return (await e.encrypt(plaintext)) as Uint8Array<ArrayBuffer>;
+/** Encrypts to `recipient`: the encapsulated key, then the AEAD ciphertext. */
+export async function encryptTo(recipient: string, plaintext: Uint8Array, purpose: Purpose): Promise<Uint8Array<ArrayBuffer>> {
+  const recipientPublicKey = await hpke().kem.deserializePublicKey(unb64(recipient));
+  const { enc, ct } = await hpke().seal({ recipientPublicKey, info: info(purpose) }, plaintext);
+  const out = new Uint8Array(enc.byteLength + ct.byteLength);
+  out.set(new Uint8Array(enc));
+  out.set(new Uint8Array(ct), enc.byteLength);
+  return out;
 }
 
-export async function decryptWith(identity: string, ciphertext: Uint8Array): Promise<Uint8Array> {
-  const d = new Decrypter();
-  d.addIdentity(identity);
-  return d.decrypt(ciphertext);
+export async function decryptWith(identity: string, ciphertext: Uint8Array, purpose: Purpose): Promise<Uint8Array> {
+  if (ciphertext.length < ENC_LEN) throw new Error("ciphertext too short");
+  const recipientKey = await hpke().kem.deserializePrivateKey(unb64(identity));
+  const pt = await hpke().open(
+    { recipientKey, enc: ciphertext.slice(0, ENC_LEN), info: info(purpose) },
+    ciphertext.slice(ENC_LEN),
+  );
+  return new Uint8Array(pt);
 }

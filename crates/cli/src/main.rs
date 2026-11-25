@@ -1,111 +1,127 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
-use clap::{Parser, Subcommand};
+use bpaf::Bpaf;
 use cookie_communism::{Client, Policy};
-use futures::StreamExt;
+use futures_util::StreamExt;
+use tracing_subscriber::filter::Targets;
+use tracing_subscriber::prelude::*;
 
 /// Receive cookies from your browsers, end-to-end encrypted, through a cookie-communism relay.
-#[derive(Parser)]
-#[command(version)]
+#[derive(Bpaf)]
+#[bpaf(options, version)]
 struct Cli {
     /// State file (keys, paired browsers, cached cookies). One per consumer.
-    #[arg(long, global = true, env = "CCOM_STATE")]
-    state: Option<PathBuf>,
-    #[command(subcommand)]
+    #[bpaf(long, env("CCOM_STATE"), argument("FILE"))]
+    state: PathBuf,
+    #[bpaf(external)]
     command: Command,
 }
 
-#[derive(Subcommand)]
+#[derive(Bpaf, Clone)]
 enum Command {
     /// Pair with a browser using an invite from the extension. Repeat to add more browsers.
+    #[bpaf(command)]
     Pair {
-        invite: String,
         /// Name shown in the extension.
-        #[arg(long)]
+        #[bpaf(argument("NAME"))]
         label: String,
         /// Cookie selector, `domain` or `domain:name` (repeatable).
-        #[arg(long = "want", required = true)]
+        #[bpaf(long("want"), argument("SELECTOR"), some("pass at least one --want"))]
         wants: Vec<String>,
+        #[bpaf(positional("INVITE"))]
+        invite: String,
     },
     /// List paired browsers.
+    #[bpaf(command)]
     Owners,
     /// Show each selector group: its policy, the browser supplying it, and expiry.
+    #[bpaf(command)]
     Status,
     /// Set the policy for all groups, or for one selector with --selector.
+    #[bpaf(command)]
     Policy {
         /// Applies to this selector (or, for a bare domain, every selector on it).
-        #[arg(long)]
+        #[bpaf(argument("SELECTOR"))]
         selector: Option<String>,
-        #[command(subcommand)]
+        #[bpaf(external(policy_arg))]
         policy: PolicyArg,
     },
     /// Fetch new cookies once.
+    #[bpaf(command)]
     Sync {
         /// Write the chosen cookies here as a Netscape cookies.txt.
-        #[arg(long)]
+        #[bpaf(argument("FILE"))]
         out: Option<PathBuf>,
     },
     /// Fetch new cookies as they arrive, forever.
+    #[bpaf(command)]
     Watch {
         /// Rewrite this Netscape cookies.txt on every change.
-        #[arg(long)]
+        #[bpaf(argument("FILE"))]
         out: Option<PathBuf>,
     },
     /// Print the chosen cookies (Netscape format, or JSON).
+    #[bpaf(command)]
     Get {
-        #[arg(long)]
+        /// Print JSON instead.
         json: bool,
     },
     /// Report that the cookies for a selector stopped working.
+    #[bpaf(command)]
     Fail {
-        selector: String,
-        #[arg(long, default_value = "reported from the command line")]
+        /// What went wrong, shown in the extension.
+        #[bpaf(argument("TEXT"), fallback("reported from the command line".to_string()))]
         reason: String,
+        #[bpaf(positional("SELECTOR"))]
+        selector: String,
     },
     /// Forget a paired browser locally (it should also revoke the grant in the extension).
-    Forget { owner: String },
+    #[bpaf(command)]
+    Forget {
+        #[bpaf(positional("OWNER"))]
+        owner: String,
+    },
 }
 
-#[derive(Subcommand, Clone)]
+#[derive(Bpaf, Clone)]
 enum PolicyArg {
     /// The browser whose key cookies expire last (the default).
+    #[bpaf(command)]
     Longest {
-        /// Cookie names to compare, for domain-wide selectors.
-        #[arg(long)]
+        /// Cookie names to compare, for domain-wide selectors (repeatable).
+        #[bpaf(argument("NAME"))]
         by: Vec<String>,
     },
     /// The browser whose cookies changed most recently.
+    #[bpaf(command)]
     Freshest,
     /// Keep the current browser while it works.
+    #[bpaf(command)]
     Sticky {
-        /// Browsers (label or ID) to try first when switching.
-        #[arg(long)]
+        /// Browsers (label or ID) to try first when switching (repeatable).
+        #[bpaf(argument("OWNER"))]
         prefer: Vec<String>,
     },
     /// Only this browser.
-    Pinned { owner: String },
+    #[bpaf(command)]
+    Pinned {
+        #[bpaf(positional("OWNER"))]
+        owner: String,
+    },
     /// Remove the --selector policy, falling back to the default.
+    #[bpaf(command)]
     Clear,
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "cookie_communism=info,ccom=info".into()),
-        )
-        .with_writer(std::io::stderr)
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
+        .with(log_filter("cookie_communism=info,ccom=info"))
         .init();
-    let cli = Cli::parse();
-    let state = match cli.state {
-        Some(p) => p,
-        None => dirs::config_dir()
-            .context("no config directory; pass --state")?
-            .join("cookie-communism")
-            .join("state.json"),
-    };
+    let cli = cli().run();
+    let state = cli.state;
     let open =
         || Client::open(&state).with_context(|| format!("opening {}; pair first", state.display()));
 
@@ -279,4 +295,12 @@ fn fmt_time(unix: i64) -> String {
         a => format!("{}d", a / 86400),
     };
     format!("{human} {suffix}")
+}
+
+/// The log filter from `RUST_LOG` (`target=level,…`), or `default`.
+fn log_filter(default: &str) -> Targets {
+    std::env::var("RUST_LOG")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or_else(|| default.parse().expect("default filter parses"))
 }

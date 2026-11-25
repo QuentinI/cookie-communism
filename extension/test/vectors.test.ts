@@ -35,7 +35,7 @@ test("Ed25519 keys and deterministic signatures match Rust", async () => {
   assert.equal(await consumer.sign(await messageBytes("grant-id-0001", utf8("ciphertext"))), v.message_signature);
 });
 
-test("age identities, envelopes and pairing codes interoperate", async () => {
+test("box keys, envelopes and pairing codes interoperate", async () => {
   assert.equal(await boxRecipient(v.consumer_box_identity), v.consumer_box);
   assert.deepEqual(await openEnvelope(v.envelope as Envelope, v.owner_public, v.consumer_box_identity), v.snapshot);
 

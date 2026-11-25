@@ -120,7 +120,7 @@ export async function sealEnvelope(
   consumerBox: string,
   owner: SignKey,
 ): Promise<Envelope> {
-  const ciphertext = await encryptTo(consumerBox, utf8(JSON.stringify(snapshot)));
+  const ciphertext = await encryptTo(consumerBox, utf8(JSON.stringify(snapshot)), "envelope");
   return {
     grant_id: grantId,
     version,
@@ -134,20 +134,20 @@ export async function openEnvelope(env: Envelope, ownerSign: string, consumerBox
   if (!(await verify(ownerSign, await envelopeBytes(env.grant_id, env.version, ciphertext), env.signature))) {
     throw new Error("bad envelope signature");
   }
-  return JSON.parse(fromUtf8(await decryptWith(consumerBox, ciphertext))) as Snapshot;
+  return JSON.parse(fromUtf8(await decryptWith(consumerBox, ciphertext, "envelope"))) as Snapshot;
 }
 
 /** Verifies and decrypts a pairing request (see `MailboxItem::open_pairing` in Rust). */
 export async function openPairing(item: MailboxItem, ownerBox: string): Promise<PairingRequest> {
   if (!item.invite_token) throw new Error("pairing item without invite token");
   const ciphertext = unb64(item.ciphertext);
-  const request = JSON.parse(fromUtf8(await decryptWith(ownerBox, ciphertext))) as PairingRequest;
+  const request = JSON.parse(fromUtf8(await decryptWith(ownerBox, ciphertext, "pairing request"))) as PairingRequest;
   if (request.consumer_sign !== item.sender) throw new Error("pairing request key does not match sender");
   const signed = await pairingRequestBytes(item.invite_token, ciphertext);
   if (!(await verify(request.consumer_sign, signed, item.signature))) {
     throw new Error("bad pairing request signature");
   }
-  if (!request.consumer_box.startsWith("age1")) throw new Error("consumer box key is not age X25519");
+  if (unb64(request.consumer_box).length !== 32) throw new Error("consumer box key is not an X25519 public key");
   request.wants = request.wants.map((w) => selectorToString(parseSelector(w)));
   return request;
 }
@@ -158,5 +158,5 @@ export async function openMessage(item: MailboxItem, consumerSign: string, owner
   if (!(await verify(consumerSign, await messageBytes(item.grant_id, ciphertext), item.signature))) {
     throw new Error("bad message signature");
   }
-  return JSON.parse(fromUtf8(await decryptWith(ownerBox, ciphertext))) as ConsumerMessage;
+  return JSON.parse(fromUtf8(await decryptWith(ownerBox, ciphertext, "message"))) as ConsumerMessage;
 }

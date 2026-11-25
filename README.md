@@ -71,6 +71,7 @@ In the extension, click **Add consumer** and copy the invite. Then:
 
 ```sh
 cargo build --release -p ccom
+export CCOM_STATE=~/.config/esselunga-mcp/ccom.json
 ccom pair 'cc1:…' --label esselunga-mcp --want 'esselunga.it:rmbme-sso-x'
 ```
 
@@ -85,8 +86,8 @@ ccom watch --out ~/.config/esselunga-mcp/cookies.txt
 
 Run it under launchd or systemd. Other commands: `ccom status`, `ccom owners`, `ccom get [--json]`,
 `ccom sync`, `ccom fail SELECTOR` (report that cookies stopped working), `ccom policy …`
-(`longest`, the default; `freshest`; `sticky`; `pinned`), `ccom forget OWNER`. The state file
-defaults to the OS config directory; `--state` or `CCOM_STATE` selects another.
+(`longest`, the default; `freshest`; `sticky`; `pinned`), `ccom forget OWNER`. Every command
+takes the state file, one per consumer, as `CCOM_STATE` or as `--state FILE` before the command.
 
 ### Embedding
 

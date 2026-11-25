@@ -6,7 +6,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-age = "0.12.1"
+hpke = { version = "0.15.1", default-features = false, features = ["getrandom", "alloc", "x25519", "aes"] }
 base64 = "0.23.1"
 ed25519-dalek = "3.0.0"
 getrandom = "0.4.3"

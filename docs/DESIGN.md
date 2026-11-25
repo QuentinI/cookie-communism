@@ -111,7 +111,7 @@ If the snapshot changed, it uploads an **envelope**:
 ```
 envelope  = { grant_id, version, ciphertext, signature }
   version    strictly increasing per grant
-  ciphertext age, encrypted to consumer_box
+  ciphertext HPKE, encrypted to consumer_box (§8)
   signature  Ed25519 by owner_sign over (grant_id, version, ciphertext)
 plaintext = { owner_label, taken_at,
               cookies: [{domain, host_only, name, value, path, secure,
@@ -291,8 +291,8 @@ ccom fail SELECTOR [--reason TEXT]    # report_failure from a script
 ccom forget OWNER                     # drop a browser locally
 ```
 
-`--state` (or `CCOM_STATE`; default: the OS config dir) selects the state file, so one machine
-can hold several consumers.
+Every command takes the state file as `--state FILE` before the command, or as `CCOM_STATE`.
+There is no default: each consumer has its own, so one machine can hold several.
 
 ### 5.4 Example: esselunga-mcp
 
@@ -370,12 +370,15 @@ A single Rust binary with SQLite, run on the user's server behind TLS.
 
 ## 8. Crypto
 
-- **Encryption: [age](https://age-encryption.org) X25519 recipients**, via
-  [typage](https://github.com/FiloSottile/typage) in the extension and the `age` crate in Rust. A
-  consumer key is an ordinary age identity, so payloads can be inspected with `rage -d` when
-  debugging.
-- **Signatures: Ed25519**, via WebCrypto and `ed25519-dalek`. age
-  does not authenticate the sender, so envelopes and messages are signed.
+- **Encryption: [HPKE](https://www.rfc-editor.org/rfc/rfc9180) (RFC 9180)**, base mode, with
+  DHKEM(X25519, HKDF-SHA256), HKDF-SHA256 and AES-128-GCM: the suite browsers can run natively.
+  The extension uses [`@hpke/core`](https://github.com/dajiaji/hpke-js) on WebCrypto; Rust uses
+  the `hpke` crate. A ciphertext is the 32-byte encapsulated key followed by the AEAD output. HPKE's
+  `info` names what the ciphertext holds (`cookie-communism/v1 pairing request`, `… envelope`,
+  `… message`), so one kind can't be opened as another. Box keys are the base64 of the raw
+  32-byte X25519 keys.
+- **Signatures: Ed25519**, via WebCrypto and `ed25519-dalek`. HPKE's base mode does not
+  authenticate the sender, so pairing requests, envelopes and messages are signed.
 - **Pairing code:** the first 40 bits of
   `SHA-256("cc-pair-v1" ‖ owner_sign ‖ owner_box ‖ consumer_sign ‖ consumer_box ‖ invite_token)`,
   in Crockford base32 as `XXXX-XXXX`. A relay forging a request has one guess per invite, and the
@@ -385,13 +388,13 @@ A single Rust binary with SQLite, run on the user's server behind TLS.
 
 ```
 Cargo workspace
-  crates/proto        wire types, signing/verification, age wrapping, pairing code
+  crates/proto        wire types, signing/verification, HPKE, pairing code
   crates/client       the embeddable library (`cookie-communism`), policies, reqwest CookieStore;
                       tests/e2e.rs runs it against an in-process relay
   crates/cli          `ccom`
   crates/relay        axum + SQLite
   testdata/vectors/   JSON fixtures generated from proto, checked by the extension's tests
-extension/            TypeScript, MV3, typage + WebCrypto, esbuild; builds Firefox and Chrome zips
+extension/            TypeScript, MV3, WebCrypto (with @hpke/core), esbuild; builds Firefox and Chrome zips
   src/core/           protocol and owner logic, no browser APIs
   test/               vectors, TS owner ↔ Rust relay and `ccom`, and a Chromium smoke test
 ```

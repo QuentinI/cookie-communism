@@ -10,14 +10,15 @@ use serde::{Deserialize, Serialize};
 use crate::policy::{Group, Policy, Source};
 use crate::{Error, Result};
 
-const FORMAT: u32 = 1;
+/// Format 1 held age keys; format 2 holds raw X25519 keys for HPKE.
+const FORMAT: u32 = 2;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct State {
     pub format: u32,
     /// Consumer Ed25519 seed, base64.
     pub consumer_sign: String,
-    /// Consumer age identity.
+    /// Consumer X25519 private key for HPKE, base64.
     pub consumer_box: String,
     pub owners: Vec<OwnerState>,
     #[serde(default)]
@@ -72,6 +73,12 @@ impl State {
             std::fs::read(path).map_err(|e| Error::State(format!("{}: {e}", path.display())))?;
         let state: Self = serde_json::from_slice(&text)
             .map_err(|e| Error::State(format!("{}: {e}", path.display())))?;
+        if state.format < FORMAT {
+            return Err(Error::State(format!(
+                "{}: made by an older version with incompatible keys; pair again with a new state file",
+                path.display()
+            )));
+        }
         if state.format != FORMAT {
             return Err(Error::State(format!(
                 "{}: unsupported format {}",

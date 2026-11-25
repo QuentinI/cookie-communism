@@ -18,6 +18,13 @@ fn now() -> i64 {
         .as_secs() as i64
 }
 
+/// A plain reqwest client for talking to the relay directly. The library hands reqwest its own TLS
+/// configuration; a bare client needs a process-wide rustls provider.
+fn http() -> reqwest::Client {
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    reqwest::Client::new()
+}
+
 async fn start_relay() -> String {
     let state = cookie_communism_relay::AppState::new(Default::default()).unwrap();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -46,7 +53,7 @@ impl TestOwner {
             label: label.into(),
             sign: SignKey::generate(),
             boxid: BoxIdentity::generate(),
-            http: reqwest::Client::new(),
+            http: http(),
         }
     }
 
@@ -412,7 +419,7 @@ async fn several_owners_policies_failure_and_revocation() {
 async fn relay_enforces_authentication_and_membership() {
     let relay = start_relay().await;
     let owner = TestOwner::new(&relay, "Firefox");
-    let http = reqwest::Client::new();
+    let http = http();
 
     // Browsers may call the relay cross-origin with the signature headers.
     let res = http

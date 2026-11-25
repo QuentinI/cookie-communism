@@ -9,8 +9,9 @@ use cookie_communism_proto::api::{
 use cookie_communism_proto::{
     BoxRecipient, ConsumerMessage, Invite, PairingRequest, PublicKey, Selector, signing,
 };
-use futures::Stream;
+use futures_util::Stream;
 use reqwest::Method;
+use rustls_platform_verifier::BuilderVerifierExt;
 
 use crate::jar::{Jar, SharedJar};
 use crate::policy::{self, Choice, Policy};
@@ -403,7 +404,7 @@ impl Client {
         });
         // With several relays, take whichever answers first; the others are asked again on the
         // next poll, and relays keep the latest envelope, so nothing is lost.
-        let (result, _, _) = futures::future::select_all(calls).await;
+        let (result, _, _) = futures_util::future::select_all(calls).await;
         let result = result?.unwrap_or_default();
         self.process(result).await
     }
@@ -515,7 +516,7 @@ impl Client {
             queue: VecDeque<Result<Event>>,
             failures: u32,
         }
-        futures::stream::unfold(
+        futures_util::stream::unfold(
             W {
                 queue: VecDeque::new(),
                 failures: 0,
@@ -623,7 +624,16 @@ impl Client {
 }
 
 fn http_client() -> reqwest::Client {
+    // rustls with ring and the OS's certificate verifier, handed to reqwest directly rather than
+    // installed as the process-wide default, which an embedding application may set itself.
+    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let tls = rustls::ClientConfig::builder_with_provider(provider)
+        .with_safe_default_protocol_versions()
+        .and_then(|b| b.with_platform_verifier())
+        .expect("TLS configuration builds")
+        .with_no_client_auth();
     reqwest::Client::builder()
+        .tls_backend_preconfigured(tls)
         .user_agent(concat!("cookie-communism/", env!("CARGO_PKG_VERSION")))
         .connect_timeout(Duration::from_secs(15))
         .build()

@@ -37,12 +37,8 @@
           inherit pname version;
           src = rustSrc;
           cargoLock.lockFile = ./Cargo.lock;
-          # nixpkgs' cargo hooks link system libraries instead of the crates' bundled copies:
-          # AWS-LC for rustls (aws-lc-sys) and SQLite for the relay (libsqlite3-sys).
-          buildInputs = [
-            pkgs.aws-lc
-            pkgs.sqlite
-          ];
+          # nixpkgs' cargo hooks link the system SQLite instead of the relay's bundled copy.
+          buildInputs = [ pkgs.sqlite ];
           nativeBuildInputs = [ pkgs.pkg-config ];
           cargoBuildFlags = [
             "-p"
@@ -89,7 +85,7 @@
               ./extension/vendor/fdl/packages/css
             ];
           };
-          npmDepsHash = "sha256-nb5g9/w45Yzs95LvOc7EKm2uFNN112kmb64HGyD8/Q4=";
+          npmDepsHash = "sha256-b+R8i3OTse/HXzzFZfWtVMJfSiV+zPQvQ+1mLxvW4Uc=";
           nativeBuildInputs = [ pkgs.zip ];
           installPhase = ''
             runHook preInstall
